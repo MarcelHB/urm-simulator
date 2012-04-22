@@ -149,7 +149,7 @@ class URMProgram
       register = parse_number
 
       if register.nil?
-        errors << "[parsing] required opertation register at #{@io.pos}"
+        errors << "[parsing] required operation register at #{@io.pos}"
         return false
       end
 

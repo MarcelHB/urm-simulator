@@ -75,7 +75,7 @@ class URM
   
   #----------------------------------------------------------------------------
   def alloc!(register)
-    if register > @registers.length - 1
+    if register >= @registers.length
       @registers = Array.new(register + 1, 0)
     end
   end
