@@ -19,11 +19,13 @@ class URM
         instruction = @program.instructions[@idx]
         args = instruction[:arg]
 
-       case instruction[:op]
+        case instruction[:op]
         when :inc
-          increase!(args[0])
+          @registers[args[0]] += 1
         when :dec
-          decrease!(args[0])
+          if @registers[args[0]] > 0
+            @registers[args[0]] -= 1
+          end
         when :jz
           if @registers[args[0]] == 0
             @idx = @idx + args[1]
@@ -39,7 +41,7 @@ class URM
           @stopped = true
         end
         
-        @idx = @idx + 1
+       @idx = @idx + 1
       end
     end
   end
@@ -77,20 +79,6 @@ class URM
   def alloc!(register)
     if register >= @registers.length
       @registers = Array.new(register + 1, 0)
-    end
-  end
-  
-  #----------------------------------------------------------------------------
-  def increase!(register)
-    @registers[register] += 1
-  end
-  
-  #----------------------------------------------------------------------------
-  def decrease!(register)
-    if @registers[register] > 0
-      @registers[register] -= 1
-    else
-      @registers[register] = 0
     end
   end
 end
