@@ -1,0 +1,5 @@
+*.o
+*.s
+*.exe
+*.swp
+misc

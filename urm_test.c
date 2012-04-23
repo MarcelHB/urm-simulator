@@ -9,7 +9,7 @@ int main() {
     URMProgram* program = preconfigure_program((unsigned int*)&initial_values, 4);
     unsigned int results = 0;
     unsigned int* result_registers = NULL;
-    FILE* file = fopen("program.txt", "r");
+    FILE* file = fopen("misc/program.txt", "r");
     
     if(file == NULL) {
         printf("Unable to open file!\n");

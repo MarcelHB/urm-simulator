@@ -8,6 +8,7 @@ typedef struct URMVM {
     unsigned int stopped;
     unsigned int* registers;
     unsigned int number_of_registers;
+    unsigned int native;
 } URMVM;
 
 void allocate(URMVM*, unsigned int);

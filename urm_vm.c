@@ -3,6 +3,7 @@
 
 #include "urm_vm.h"
 #include "urm_program.h"
+#include "urm_x86.h"
 
 void allocate(URMVM* vm, unsigned int index) {
     if(index >= vm->number_of_registers) {
@@ -43,6 +44,10 @@ unsigned int start_program(URMVM* vm, URMProgram* program, unsigned int** regist
     vm->index = 0;
     vm->stopped = 0;
     preallocate_registers(vm, program, program->registers, program->number_of_registers);
+    
+    if(vm->native) {
+        return start_native(vm, program, registers, n);
+    }
 
     while(!vm->stopped) {
         URMInstruction* instr = &(program->instruction_list[vm->index]);
