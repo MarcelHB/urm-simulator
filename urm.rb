@@ -89,8 +89,6 @@ class URM
   def decrease!(register)
     if @registers[register] > 0
       @registers[register] -= 1
-    else
-      @registers[register] = 0
     end
   end
 end
