@@ -53,7 +53,7 @@ class URM
     u.registers
   end
     
-  private
+  protected
   
   attr_accessor :idx, :stopped, :program
   attr_writer :registers, :errors
