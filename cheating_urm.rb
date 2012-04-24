@@ -1,4 +1,4 @@
-require ".\\urm.rb"
+require "#{File.dirname(__FILE__)}/urm"
 
 # naive URM on ruby is slow, 3*10^6 instructions took ~1.5 sec, v1.9.3, Core i7
 # this one is much faster: cut :inc/:dec by looking down the pipeline and do the

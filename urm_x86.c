@@ -66,6 +66,7 @@ void decrease(Compilation* c, const unsigned int reg) {
 void jump_if_zero(Compilation* c, const unsigned int reg) {
     // TODO: Backup superior counter!
     // TODO: handle long jumps
+    // TODO: cheating version as in Ruby?
     char b[] = { 0x8B, 0x44, 0x24, 0x08,                        // MOV EAX, [ESP+8]
                  0x83, 0xC0, reg * sizeof(unsigned int),        // ADD EAX, reg * 4
                  0x8B, 0xC8,                                    // MOV ECX, EAX
@@ -73,6 +74,8 @@ void jump_if_zero(Compilation* c, const unsigned int reg) {
                  0x74, 0x00                                     // JZ (to be determined before JUMP)
     };
     push_bytes(c, (char*)&b, sizeof(b));
+    c->iteration_stack = (IterationStackMarker*)realloc(c->iteration_stack, sizeof(IterationStackMarker) * ++(c->iteration_depth));
+    c->iteration_stack[c->iteration_depth-1] = (IterationStackMarker){ reg, c->byte - 4 };
 }
 
 void jump(Compilation* c) {
@@ -81,10 +84,11 @@ void jump(Compilation* c) {
     char b[] = { 0xEB, 0x00 };                                  // JMP (back to TEST)
     // TODO: Restore superior counter!
     push_bytes(c, (char*)&b, sizeof(b));
+    c->iteration_stack = (IterationStackMarker*)realloc(c->iteration_stack, sizeof(IterationStackMarker) * --(c->iteration_depth));
 }
 
 char* compile_x86(URMVM* vm, URMProgram* program) {
-    Compilation c = { NULL, 0, 0 };
+    Compilation c = { NULL, 0, 0, NULL, 0 };
     
     int i = 0;
     for(; i < program->instructions; ++i) {

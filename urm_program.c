@@ -119,9 +119,11 @@ unsigned int parse_operation(URMProgram* program, FILE* stream) {
 
     if(number >= 0) {
         URMInstruction* urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
-        urmi->instruction = instruction;
-        urmi->args = 1;
-        urmi->arg_list = (int*)malloc(sizeof(int));
+        *urmi = (URMInstruction)  { 
+            instruction, 
+            1,
+            (int*)malloc(sizeof(int))
+        };
         *(urmi->arg_list) = number;
         add_instruction(program, urmi);
 
@@ -135,9 +137,11 @@ unsigned int parse_operation(URMProgram* program, FILE* stream) {
 unsigned int parse_iteration(URMProgram* program, FILE* stream) {
     if(program->current_char == URM_SYMBOL_IT_BEGIN) {
         URMInstruction* urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
-        urmi->instruction = OP_JZ;
-        urmi->args = 0;
-        urmi->arg_list = NULL;
+        *urmi = (URMInstruction)  { 
+            OP_JZ, 
+            0,
+            NULL
+        };
         add_instruction(program, urmi);
         push_parsing_stack(program, ITERATION);
 
@@ -153,9 +157,11 @@ unsigned int parse_iteration_end(URMProgram* program, FILE* stream) {
     if(program->current_char == URM_SYMBOL_IT_END && marker->token == ITERATION) {
         unsigned int distance = program->instructions - marker->instruction_number;
         URMInstruction* urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
-        urmi->instruction = OP_JMP;
-        urmi->args = 1;
-        urmi->arg_list = (int*)malloc(sizeof(int));
+        *urmi = (URMInstruction)  { 
+            OP_JMP, 
+            1,
+            (int*)malloc(sizeof(int))
+        };        
         // TODO: max distance
         *(urmi->arg_list) = ((int)distance) * -1;
         add_instruction(program, urmi);
@@ -218,35 +224,43 @@ unsigned int parse_destination_list(URMProgram* program, FILE* stream, unsigned 
 
 void move(URMProgram* program, unsigned int source, unsigned int* dests, unsigned int n) {
     URMInstruction* urmi_jz = (URMInstruction*)malloc(sizeof(URMInstruction));
-    urmi_jz->instruction = OP_JZ;
-    urmi_jz->args = 2;
-    urmi_jz->arg_list = (int*)malloc(sizeof(int)*2);
+    *urmi_jz = (URMInstruction)  { 
+        OP_JZ, 
+        2,
+        (int*)malloc(sizeof(int)*2) 
+    };
     add_instruction(program, urmi_jz);
     unsigned int exit_jump_location = program->instructions - 1;
 
     int i = 0;
     for(; i < n; ++i) {
         URMInstruction* urmi_inc = (URMInstruction*)malloc(sizeof(URMInstruction));
-        urmi_inc->instruction = OP_INC;
-        urmi_inc->args = 1;
-        urmi_inc->arg_list = (int*)malloc(sizeof(int));
+        *urmi_inc = (URMInstruction)  { 
+            OP_INC, 
+            1,
+            (int*)malloc(sizeof(int))
+        };
         *(urmi_inc->arg_list) = (int)dests[i];
         add_instruction(program, urmi_inc);
     }
 
     URMInstruction* urmi_dec = (URMInstruction*)malloc(sizeof(URMInstruction));
-    urmi_dec->instruction = OP_DEC;
-    urmi_dec->args = 1;
-    urmi_dec->arg_list = (int*)malloc(sizeof(int));
+     *urmi_dec = (URMInstruction)  { 
+        OP_DEC, 
+        1,
+        (int*)malloc(sizeof(int))
+    };
     *(urmi_dec->arg_list) = (int)source;
     add_instruction(program, urmi_dec);
     
     // TODO: distance overflow, very long jumps
     unsigned int distance = program->instructions - exit_jump_location;
     URMInstruction* urmi_jmp = (URMInstruction*)malloc(sizeof(URMInstruction));
-    urmi_jmp->instruction = OP_JMP;
-    urmi_jmp->args = 1;
-    urmi_jmp->arg_list = (int*)malloc(sizeof(int));
+    *urmi_jmp = (URMInstruction)  { 
+        OP_JMP, 
+        1,
+        (int*)malloc(sizeof(int))
+    };
     *(urmi_jmp->arg_list) = ((int)distance) * -1;
     add_instruction(program, urmi_jmp);
 
@@ -365,9 +379,11 @@ unsigned int parse(URMProgram* program, FILE* stream) {
     }
 
     URMInstruction* urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
-    urmi->instruction = OP_HALT;
-    urmi->args = 0;
-    urmi->arg_list = NULL;
+    *urmi = (URMInstruction)  { 
+        OP_HALT, 
+        0,
+        NULL
+    };
     add_instruction(program, urmi);
 
     if(program->stack_size > 0) {
@@ -410,15 +426,18 @@ void free_program(URMProgram* program) {
 
 URMProgram* preconfigure_program(unsigned int* registers, unsigned int n) {
     URMProgram* program = (URMProgram*)malloc(sizeof(URMProgram));
-    program->errors = 0;
-    program->error_list = NULL;
-    program->instructions = 0;
-    program->instruction_list = NULL;
-    program->stack_size = 0;
-    program->parsing_stack = NULL;
-    program->number_of_registers = n;
-    program->byte = 0;
-    program->registers = (unsigned int*)malloc(sizeof(unsigned int)*n);
+    *program = (URMProgram)  {
+        NULL,
+        0,
+        NULL,
+        0,
+        NULL,
+        0,
+        (unsigned int*)malloc(sizeof(unsigned int) * n),
+        n,
+        0,
+        0
+    };
     memcpy(program->registers, registers, n*sizeof(unsigned int));
 
     return program;

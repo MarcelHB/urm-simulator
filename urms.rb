@@ -1,8 +1,8 @@
 require "stringio"
 require "benchmark"
 
-require ".\\urm.rb"
-require ".\\cheating_urm.rb"
+require "#{File.dirname(__FILE__)}/urm"
+require "#{File.dirname(__FILE__)}/cheating_urm"
 
 # test run script, move along ...
 

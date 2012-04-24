@@ -4,10 +4,17 @@
 #include "urm_vm.h"
 #include "urm_program.h"
 
+typedef struct IterationStackMarker  {
+    unsigned int reg;
+    unsigned int test_offset;
+} IterationStackMarker;
+
 typedef struct Compilation {
     char* byte_code;
     unsigned int size;
     unsigned int byte;
+    IterationStackMarker* iteration_stack;
+    unsigned int iteration_depth;
 } Compilation;
 
 unsigned int start_native(URMVM*, URMProgram*, unsigned int**, unsigned int*);
