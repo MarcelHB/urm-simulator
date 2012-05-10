@@ -23,7 +23,10 @@ void push_bytes(Compilation* c, char* bytes, const unsigned int n) {
 }
 
 void reset_stack(Compilation* c) {
-    char b[] = { 0x83, 0xC4, 0x04 }; // ADD ESP, 4
+    char b[] = { 0x58,                       // POP EAX
+                 0x83, 0xC4, 0x04,           // ADD ESP, 4
+                 0xFF, 0xE0                  // JMP EAX
+    }; 
     push_bytes(c, (char*)&b, sizeof(b)); 
 }
 
@@ -60,12 +63,9 @@ void decrease(Compilation* c, const unsigned int reg) {
     } else {
         char b[] = { 0x8B, 0x44, 0x24, 0x04,                        // MOV EAX, [ESP+4]
                      0x83, 0xC0, reg * sizeof(unsigned int),        // ADD EAX, reg * 4
-                     0x8B, 0x00,                                    // MOV EAX, [EAX]
-                     0x85, 0xC0,                                    // TEST EAX, EAX
-                     0x74, 0x0B,                                    // JZ 0xB
-                     0x8B, 0x44, 0x24, 0x04,                        // MOV EAX, [ESP+4]
-                     0x83, 0xC0, reg * sizeof(unsigned int),        // ADD EAX, reg * 4
-                     0x8B, 0xD0,                                    // MOV EDX, EAX
+                     0x8B, 0x10,                                    // MOV EDX, [EAX]
+                     0x85, 0xD2,                                    // TEST EDX, EDX
+                     0x74, 0x03,                                    // JZ 0x3
                      0x4A,                                          // DEC EDX
                      0x89, 0x10                                     // MOV [EAX], EDX
         };
@@ -88,13 +88,16 @@ void jump_if_zero(Compilation* c, const unsigned int reg) {
                  0x83, 0xC0, reg * sizeof(unsigned int),        // ADD EAX, reg * 4
                  0x8B, 0x08,                                    // MOV ECX, [EAX]
                  0x85, 0xC9,                                    // TEST ECX, ECX <-- need to jump back here
-                 0x75, 0x07,                                    // JNZ 0x7
+                 0x75, 0x10,                                    // JNZ 0x10
+                 0x8B, 0x44, 0x24, 0x04,                        // MOV EAX, [ESP+4]
+                 0x83, 0xC0, reg * sizeof(unsigned int),        // ADD EAX, reg * 4
+                 0x89, 0x08,                                    // MOV [EAX], ECX
                  0xB8, 0x00, 0x00, 0x00, 0x00,                  // MOV EAX <exit address>
                  0xFF, 0xE0                                     // JMP EAX
     };
     push_bytes(c, (char*)&b, sizeof(b));
     c->iteration_stack = (IterationStackMarker*)realloc(c->iteration_stack, sizeof(IterationStackMarker) * ++(c->iteration_depth));
-    c->iteration_stack[c->iteration_depth-1] = (IterationStackMarker){ reg, c->byte - 11 };
+    c->iteration_stack[c->iteration_depth-1] = (IterationStackMarker){ reg, c->byte - 20 };
 }
 
 void jump(Compilation* c) {
@@ -107,9 +110,9 @@ void jump(Compilation* c) {
         test_byte = c->iteration_stack[c->iteration_depth-1].test_offset,
         test_address = (int)&(c->byte_code[test_byte]);
     
-    // JMP xx is 6 previous bytes, exit address 5 bytes ahead of test_address
+    // JMP xx is 6 previous bytes, exit address 14 bytes ahead of test_address
     int* test_address_ptr = (int*)&(c->byte_code[current_byte-6]),
-      *exit_address_ptr = (int*)&(c->byte_code[test_byte+5]);
+      *exit_address_ptr = (int*)&(c->byte_code[test_byte+14]);
 
     *test_address_ptr = test_address;
     *exit_address_ptr = (int)&(c->byte_code[current_byte]);

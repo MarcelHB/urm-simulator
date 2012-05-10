@@ -16,7 +16,7 @@ int main() {
     }
 
     parse(program, file);
-#if 1
+#if 0
     unsigned int i = 0;
     for(; i < program->instructions; ++i) {
         printf("instruction %u: %d\n", i, program->instruction_list[i].instruction);
