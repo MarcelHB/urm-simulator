@@ -1,5 +1,3 @@
-require "#{File.dirname(__FILE__)}/urm_program"
-
 class URM  
   attr_reader :registers, :errors
   
