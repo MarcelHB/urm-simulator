@@ -12,8 +12,9 @@ typedef struct URMVM {
 } URMVM;
 
 void allocate(URMVM*, unsigned int);
-void preallocate_registers(URMVM*, URMProgram*, unsigned int*, unsigned int);
+void preallocate_registers(URMVM*, URMProgram*, unsigned int*, const unsigned int);
 unsigned int start_program(URMVM*, URMProgram*, unsigned int**, unsigned int*);
+URMVM* new_vm();
 void free_vm(URMVM*);
 
 #endif

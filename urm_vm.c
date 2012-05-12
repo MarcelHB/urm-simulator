@@ -13,7 +13,7 @@ void allocate(URMVM* vm, unsigned int index) {
     }
 }
 
-void preallocate_registers(URMVM* vm, URMProgram* program, unsigned int* registers, unsigned int n) {
+void preallocate_registers(URMVM* vm, URMProgram* program, unsigned int* registers, const unsigned int n) {
     int i = 0;
     allocate(vm, 0);
     for(; i < program->instructions; ++i) {
@@ -39,6 +39,7 @@ unsigned int start_program(URMVM* vm, URMProgram* program, unsigned int** regist
         return 0;
     }
 
+    // Reset
     vm->registers = NULL;
     vm->number_of_registers = 0;
     vm->index = 0;
@@ -84,6 +85,18 @@ unsigned int start_program(URMVM* vm, URMProgram* program, unsigned int** regist
     *registers = (unsigned int*)realloc(*registers, sizeof(unsigned int) * (*n));
     memcpy(*registers, vm->registers, sizeof(unsigned int) * (*n));
     return 1;
+}
+
+URMVM* new_vm() {
+    URMVM* vm = (URMVM*)malloc(sizeof(URMVM));
+    *vm = (URMVM) {
+        0,
+        0,
+        NULL,
+        0,
+        0
+    };
+    return vm;
 }
 
 void free_vm(URMVM* vm) {
