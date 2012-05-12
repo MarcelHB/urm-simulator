@@ -134,7 +134,7 @@ char* compile_x86(URMVM* vm, URMProgram* program) {
     
     int i = 0;
     for(; i < program->instructions; ++i) {
-        URMInstruction* instr = &(program->instruction_list[i]);
+        URMInstruction* instr = program->instruction_list[i];
 
         switch(instr->instruction) {
             case OP_INC:

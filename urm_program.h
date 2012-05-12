@@ -15,7 +15,7 @@ typedef struct URMStackMarker {
 } URMStackMarker;
 
 typedef struct URMProgram {
-    URMInstruction* instruction_list;
+    URMInstruction** instruction_list;
     unsigned int instructions;
     char** error_list;
     unsigned int errors;

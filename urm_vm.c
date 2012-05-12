@@ -17,7 +17,7 @@ void preallocate_registers(URMVM* vm, URMProgram* program, unsigned int* registe
     int i = 0;
     allocate(vm, 0);
     for(; i < program->instructions; ++i) {
-        URMInstruction* instr = &(program->instruction_list[i]);
+        URMInstruction* instr = program->instruction_list[i];
 
         switch(instr->instruction) {
             case OP_INC:
@@ -50,7 +50,7 @@ unsigned int start_program(URMVM* vm, URMProgram* program, unsigned int** regist
     }
 
     while(!vm->stopped) {
-        URMInstruction* instr = &(program->instruction_list[vm->index]);
+        URMInstruction* instr = program->instruction_list[vm->index];
 
         switch(instr->instruction) {
             case OP_INC:

@@ -43,8 +43,8 @@ int parse_positive_border_int(const char* buffer) {
 }
 
 void add_instruction(URMProgram* program, URMInstruction* instruction) {
-    program->instruction_list = (URMInstruction*)realloc(program->instruction_list, sizeof(URMInstruction) * ++program->instructions);
-    program->instruction_list[program->instructions-1] = *(instruction);
+    program->instruction_list = (URMInstruction**)realloc(program->instruction_list, sizeof(URMInstruction*) * ++program->instructions);
+    program->instruction_list[program->instructions-1] = instruction;
 }
 
 void add_error(URMProgram* program, char* message) {
@@ -175,7 +175,7 @@ unsigned int parse_iteration_end(URMProgram* program, FILE* stream) {
             return 0;
         }
 
-        URMInstruction* conditional_jump = &(program->instruction_list[marker->instruction_number]);
+        URMInstruction* conditional_jump = program->instruction_list[marker->instruction_number];
         conditional_jump->args = 2;
         conditional_jump->arg_list = (int*)malloc(sizeof(int)*2);
         conditional_jump->arg_list[0] = count_register;
@@ -398,7 +398,8 @@ void free_program(URMProgram* program) {
     if(program->instructions > 0 && program->instruction_list != NULL) {
         int i = 0;
         for(; i < program->instructions; ++i) {
-            free(program->instruction_list[i].arg_list);
+            free(program->instruction_list[i]->arg_list);
+            free(program->instruction_list[i]);
         }
         free(program->instruction_list);
         program->instruction_list = NULL;

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "urm_vm.h"
 #include "urm_program.h"
@@ -37,7 +38,9 @@ int main() {
     }
 
     fclose(file);
+    free(result_registers);
     free_program(program);
+    free(program);
     free_vm(&vm);
 
     return 0;
