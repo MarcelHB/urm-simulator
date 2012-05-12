@@ -181,6 +181,39 @@ unsigned int parse_iteration_end(URMProgram* program, FILE* stream) {
         conditional_jump->arg_list[0] = count_register;
         // TODO: overflow check
         conditional_jump->arg_list[1] = distance + 1;
+        
+        // LOOP-style validation
+        if(program->loop_style) {
+            unsigned int i = marker->instruction_number, loop_style = 1;
+            
+            while(i != program->instructions && loop_style) {
+                switch(program->instruction_list[i]->instruction) {
+                    case OP_INC:
+                        if(program->instruction_list[i]->arg_list[0] == count_register) {
+                            add_error(program, "attempting to increase the count register");
+                            loop_style = 0;
+                        }
+                        break;
+                    case OP_DEC:
+                        if(program->instruction_list[i]->arg_list[0] == count_register) {
+                            if(i != program->instructions - 2) {
+                                add_error(program, "decreasing of counter at wrong location");
+                                loop_style = 0;
+                            }
+                        }
+                        break;
+                }
+                
+                if(i == program->instructions - 2) {
+                    if(program->instruction_list[i]->instruction != OP_DEC || 
+                        program->instruction_list[i]->arg_list[0] != count_register) {
+                        add_error(program, "not decreasing the counter");
+                        loop_style = 0;
+                    }
+                }
+                ++i;
+            }
+        }
 
         pop_parsing_stack(program);
         return 1;
@@ -222,7 +255,7 @@ unsigned int parse_destination_list(URMProgram* program, FILE* stream, unsigned 
     return n;
 }
 
-void move(URMProgram* program, unsigned int source, unsigned int* dests, unsigned int n) {
+void move(URMProgram* program, const unsigned int source, unsigned int* dests, const unsigned int n) {
     URMInstruction* urmi_jz = (URMInstruction*)malloc(sizeof(URMInstruction));
     *urmi_jz = (URMInstruction)  { 
         OP_JZ, 
@@ -269,12 +302,12 @@ void move(URMProgram* program, unsigned int source, unsigned int* dests, unsigne
     urmi_jz->arg_list[1] = distance + 1;
 }
 
-void change(URMProgram* program, unsigned int source, unsigned int** dests, unsigned int n) {
+void change(URMProgram* program, const unsigned int source, unsigned int** dests, const unsigned int n) {
     // TODO: overflow check
     *dests = (unsigned int*)realloc(*dests, (n+1)*sizeof(unsigned int));
     (*dests)[n] = 0;
     move(program, source, *dests, n + 1);
-    move(program, 0, &source, 1);
+    move(program, 0, (unsigned int*)&source, 1);
 }
 
 unsigned int parse_operation_with_args(URMProgram* program, FILE* stream) {
@@ -425,11 +458,16 @@ void free_program(URMProgram* program) {
     }
 }
 
-URMProgram* preconfigure_program(unsigned int* registers, unsigned int n) {
+URMProgram* preconfigure_program(unsigned int* registers, const unsigned int n) {
+    return preconfigure_program_loop(registers, n, 0);
+}
+
+URMProgram* preconfigure_program_loop(unsigned int* registers, const unsigned int n, const unsigned char loop) {
     URMProgram* program = (URMProgram*)malloc(sizeof(URMProgram));
     *program = (URMProgram)  {
         NULL,
         0,
+        loop,
         NULL,
         0,
         NULL,

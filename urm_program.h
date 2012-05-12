@@ -17,6 +17,7 @@ typedef struct URMStackMarker {
 typedef struct URMProgram {
     URMInstruction** instruction_list;
     unsigned int instructions;
+    unsigned char loop_style;
     char** error_list;
     unsigned int errors;
     URMStackMarker* parsing_stack;
@@ -48,10 +49,11 @@ unsigned int parse_iteration_end(URMProgram*, FILE*);
 int parse_positive_border_int(const char*);
 int parse_positive_int(URMProgram*, FILE*);
 
-void move(URMProgram*, unsigned int, unsigned int*, unsigned int);
-void change(URMProgram*, unsigned int, unsigned int**, unsigned int);
+void move(URMProgram*, const unsigned int, unsigned int*, const unsigned int);
+void change(URMProgram*, const unsigned int, unsigned int**, const unsigned int);
 
-URMProgram* preconfigure_program(unsigned int*, unsigned int);
+URMProgram* preconfigure_program(unsigned int*, const unsigned int);
+URMProgram* preconfigure_program_loop(unsigned int*, const unsigned int, const unsigned char);
 void free_program(URMProgram*);
 
 #endif

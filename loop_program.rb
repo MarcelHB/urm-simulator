@@ -33,7 +33,7 @@ class LoopProgram < URMProgram
       end
       
       if i == @instructions.length - 2
-        if @instructions[i][:op] != :dec
+        if @instructions[i][:op] != :dec || @instructions[i][:arg][0] != iteration_register
           @errors << "[parser] not decreasing the counter #{iteration_register}"
           unloopy = true
         end
