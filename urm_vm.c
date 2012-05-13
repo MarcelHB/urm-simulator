@@ -5,7 +5,7 @@
 #include "urm_program.h"
 #include "urm_x86.h"
 
-void allocate(URMVM* vm, unsigned int index) {
+void allocate(URMVM *vm, unsigned int index) {
     if(index >= vm->number_of_registers) {
         vm->registers = (unsigned int*)realloc(vm->registers, (index + 1) * sizeof(unsigned int));
         vm->number_of_registers = index + 1;
@@ -13,11 +13,11 @@ void allocate(URMVM* vm, unsigned int index) {
     }
 }
 
-void preallocate_registers(URMVM* vm, URMProgram* program, unsigned int* registers, const unsigned int n) {
+void preallocate_registers(URMVM *vm, URMProgram *program, unsigned int *registers, const unsigned int n) {
     int i = 0;
     allocate(vm, 0);
     for(; i < program->instructions; ++i) {
-        URMInstruction* instr = program->instruction_list[i];
+        URMInstruction *instr = program->instruction_list[i];
 
         switch(instr->instruction) {
             case OP_INC:
@@ -34,7 +34,7 @@ void preallocate_registers(URMVM* vm, URMProgram* program, unsigned int* registe
     }
 }
 
-unsigned int start_program(URMVM* vm, URMProgram* program, unsigned int** registers, unsigned int* n) {
+unsigned int start_program(URMVM *vm, URMProgram *program, unsigned int **registers, unsigned int *n) {
     if(program->errors > 0) {
         return 0;
     }
@@ -51,7 +51,7 @@ unsigned int start_program(URMVM* vm, URMProgram* program, unsigned int** regist
     }
 
     while(!vm->stopped) {
-        URMInstruction* instr = program->instruction_list[vm->index];
+        URMInstruction *instr = program->instruction_list[vm->index];
 
         switch(instr->instruction) {
             case OP_INC:
@@ -87,8 +87,8 @@ unsigned int start_program(URMVM* vm, URMProgram* program, unsigned int** regist
     return 1;
 }
 
-URMVM* new_vm() {
-    URMVM* vm = (URMVM*)malloc(sizeof(URMVM));
+URMVM *new_vm() {
+    URMVM *vm = (URMVM*)malloc(sizeof(URMVM));
     *vm = (URMVM) {
         0,
         0,
@@ -99,7 +99,7 @@ URMVM* new_vm() {
     return vm;
 }
 
-void free_vm(URMVM* vm) {
+void free_vm(URMVM *vm) {
     if(vm->number_of_registers > 0 && vm->registers != NULL) {
         free(vm->registers);
         vm->registers = NULL;

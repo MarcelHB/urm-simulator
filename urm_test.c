@@ -6,11 +6,11 @@
 
 int main() {
     unsigned int initial_values[4] = { 0, 0, 500, 600 };
-    URMVM* vm = new_vm();
-    URMProgram* program = preconfigure_program_loop((unsigned int*)&initial_values, 4, 1);
+    URMVM *vm = new_vm();
+    URMProgram *program = preconfigure_program_loop((unsigned int*)&initial_values, 4, 1);
     unsigned int results = 0;
-    unsigned int* result_registers = NULL;
-    FILE* file = fopen("misc/program.txt", "r");
+    unsigned int *result_registers = NULL;
+    FILE *file = fopen("misc/program.txt", "r");
     
     if(file == NULL) {
         printf("Unable to open file!\n");

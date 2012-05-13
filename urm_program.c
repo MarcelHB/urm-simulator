@@ -6,24 +6,24 @@
 
 static const unsigned int MAX_DECIMAL_NUMBER_BYTES = 10;
 
-void next(URMProgram* program, FILE* stream) {
+void next(URMProgram *program, FILE *stream) {
     program->current_char = fgetc(stream);
     program->byte++;
 }
 
-void revert(URMProgram* program, FILE* stream) {
+void revert(URMProgram *program, FILE *stream) {
     program->byte--;
     fseek(stream, -1, SEEK_CUR);
 }
 
-void next_char(URMProgram* program, FILE* stream) {
+void next_char(URMProgram *program, FILE *stream) {
     next(program, stream);
     while(!feof(stream) && program->current_char == ' ') {
         next(program, stream);
     }
 }
 
-int parse_positive_border_int(const char* buffer) {
+int parse_positive_border_int(const char *buffer) {
     int number = 0;
     if(buffer[9] <= 50 &&
         buffer[8] <= 49 &&
@@ -42,19 +42,19 @@ int parse_positive_border_int(const char* buffer) {
     }
 }
 
-void add_instruction(URMProgram* program, URMInstruction* instruction) {
+void add_instruction(URMProgram *program, URMInstruction *instruction) {
     program->instruction_list = (URMInstruction**)realloc(program->instruction_list, sizeof(URMInstruction*) * ++program->instructions);
     program->instruction_list[program->instructions-1] = instruction;
 }
 
-void add_error(URMProgram* program, char* message) {
+void add_error(URMProgram *program, char *message) {
     program->error_list = (char**)realloc(program->error_list, sizeof(char*) * ++program->errors);
-    char* message_copy = (char*)malloc(strlen(message) + 1);
+    char *message_copy = (char*)malloc(strlen(message) + 1);
     memcpy(message_copy, message, strlen(message) + 1);
     program->error_list[program->errors-1] = message_copy;
 }
 
-void push_parsing_stack(URMProgram* program, enum URMParsingToken token) {
+void push_parsing_stack(URMProgram *program, enum URMParsingToken token) {
     program->parsing_stack = (URMStackMarker*)realloc(program->parsing_stack, sizeof(URMStackMarker) * ++program->stack_size);
 
     URMStackMarker marker = {
@@ -65,15 +65,15 @@ void push_parsing_stack(URMProgram* program, enum URMParsingToken token) {
     program->parsing_stack[program->stack_size-1] = marker;
 }
 
-URMStackMarker* top_parsing_stack(URMProgram* program) {
+URMStackMarker *top_parsing_stack(URMProgram *program) {
     return &(program->parsing_stack[program->stack_size-1]);
 }
 
-void pop_parsing_stack(URMProgram* program) {
+void pop_parsing_stack(URMProgram *program) {
     program->parsing_stack = (URMStackMarker*)realloc(program->parsing_stack, sizeof(URMStackMarker) * --program->stack_size);
 }
 
-int parse_positive_int(URMProgram* program, FILE* stream) {
+int parse_positive_int(URMProgram *program, FILE *stream) {
     // assuming int being 4 bytes, special cases soon?
     unsigned int i = 0;
     unsigned char digit_buffer[MAX_DECIMAL_NUMBER_BYTES+1];
@@ -100,7 +100,7 @@ int parse_positive_int(URMProgram* program, FILE* stream) {
     }
 }
 
-unsigned int parse_operation(URMProgram* program, FILE* stream) {
+unsigned int parse_operation(URMProgram *program, FILE *stream) {
     enum URMInstructionSymbol instruction = 0;
 
     switch(program->current_char) {
@@ -118,7 +118,7 @@ unsigned int parse_operation(URMProgram* program, FILE* stream) {
     int number = parse_positive_int(program, stream);
 
     if(number >= 0) {
-        URMInstruction* urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
+        URMInstruction *urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
         *urmi = (URMInstruction)  { 
             instruction, 
             1,
@@ -134,9 +134,9 @@ unsigned int parse_operation(URMProgram* program, FILE* stream) {
     }
 }
 
-unsigned int parse_iteration(URMProgram* program, FILE* stream) {
+unsigned int parse_iteration(URMProgram *program, FILE *stream) {
     if(program->current_char == URM_SYMBOL_IT_BEGIN) {
-        URMInstruction* urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
+        URMInstruction *urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
         *urmi = (URMInstruction)  { 
             OP_JZ, 
             0,
@@ -151,12 +151,12 @@ unsigned int parse_iteration(URMProgram* program, FILE* stream) {
     }
 }
 
-unsigned int parse_iteration_end(URMProgram* program, FILE* stream) {
-    URMStackMarker* marker = top_parsing_stack(program);
+unsigned int parse_iteration_end(URMProgram *program, FILE *stream) {
+    URMStackMarker *marker = top_parsing_stack(program);
     
     if(program->current_char == URM_SYMBOL_IT_END && marker->token == ITERATION) {
         unsigned int distance = program->instructions - marker->instruction_number;
-        URMInstruction* urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
+        URMInstruction *urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
         *urmi = (URMInstruction)  { 
             OP_JMP, 
             1,
@@ -175,7 +175,7 @@ unsigned int parse_iteration_end(URMProgram* program, FILE* stream) {
             return 0;
         }
 
-        URMInstruction* conditional_jump = program->instruction_list[marker->instruction_number];
+        URMInstruction *conditional_jump = program->instruction_list[marker->instruction_number];
         conditional_jump->args = 2;
         conditional_jump->arg_list = (int*)malloc(sizeof(int)*2);
         conditional_jump->arg_list[0] = count_register;
@@ -221,7 +221,7 @@ unsigned int parse_iteration_end(URMProgram* program, FILE* stream) {
     return 0;
 }
 
-unsigned int parse_destination_list(URMProgram* program, FILE* stream, unsigned int** destinations) {
+unsigned int parse_destination_list(URMProgram *program, FILE *stream, unsigned int **destinations) {
     unsigned int n = 0;
     unsigned int parsing = 1;
     while(parsing) {
@@ -255,8 +255,8 @@ unsigned int parse_destination_list(URMProgram* program, FILE* stream, unsigned 
     return n;
 }
 
-void move(URMProgram* program, const unsigned int source, unsigned int* dests, const unsigned int n) {
-    URMInstruction* urmi_jz = (URMInstruction*)malloc(sizeof(URMInstruction));
+void move(URMProgram *program, const unsigned int source, unsigned int *dests, const unsigned int n) {
+    URMInstruction *urmi_jz = (URMInstruction*)malloc(sizeof(URMInstruction));
     *urmi_jz = (URMInstruction)  { 
         OP_JZ, 
         2,
@@ -267,7 +267,7 @@ void move(URMProgram* program, const unsigned int source, unsigned int* dests, c
 
     int i = 0;
     for(; i < n; ++i) {
-        URMInstruction* urmi_inc = (URMInstruction*)malloc(sizeof(URMInstruction));
+        URMInstruction *urmi_inc = (URMInstruction*)malloc(sizeof(URMInstruction));
         *urmi_inc = (URMInstruction)  { 
             OP_INC, 
             1,
@@ -277,7 +277,7 @@ void move(URMProgram* program, const unsigned int source, unsigned int* dests, c
         add_instruction(program, urmi_inc);
     }
 
-    URMInstruction* urmi_dec = (URMInstruction*)malloc(sizeof(URMInstruction));
+    URMInstruction *urmi_dec = (URMInstruction*)malloc(sizeof(URMInstruction));
      *urmi_dec = (URMInstruction)  { 
         OP_DEC, 
         1,
@@ -288,7 +288,7 @@ void move(URMProgram* program, const unsigned int source, unsigned int* dests, c
     
     // TODO: distance overflow, very long jumps
     unsigned int distance = program->instructions - exit_jump_location;
-    URMInstruction* urmi_jmp = (URMInstruction*)malloc(sizeof(URMInstruction));
+    URMInstruction *urmi_jmp = (URMInstruction*)malloc(sizeof(URMInstruction));
     *urmi_jmp = (URMInstruction)  { 
         OP_JMP, 
         1,
@@ -302,7 +302,7 @@ void move(URMProgram* program, const unsigned int source, unsigned int* dests, c
     urmi_jz->arg_list[1] = distance + 1;
 }
 
-void change(URMProgram* program, const unsigned int source, unsigned int** dests, const unsigned int n) {
+void change(URMProgram *program, const unsigned int source, unsigned int **dests, const unsigned int n) {
     // TODO: overflow check
     *dests = (unsigned int*)realloc(*dests, (n+1)*sizeof(unsigned int));
     (*dests)[n] = 0;
@@ -310,7 +310,7 @@ void change(URMProgram* program, const unsigned int source, unsigned int** dests
     move(program, 0, (unsigned int*)&source, 1);
 }
 
-unsigned int parse_operation_with_args(URMProgram* program, FILE* stream) {
+unsigned int parse_operation_with_args(URMProgram *program, FILE *stream) {
     enum { MOVE, CHANGE } instruction = MOVE;
 
     switch(program->current_char) {
@@ -338,7 +338,7 @@ unsigned int parse_operation_with_args(URMProgram* program, FILE* stream) {
 
         source_register_safe = source_register;
 
-        unsigned int* destination_list = (unsigned int*)malloc(0);
+        unsigned int *destination_list = (unsigned int*)malloc(0);
         unsigned int destinations = 0;
 
         next_char(program, stream);
@@ -369,7 +369,7 @@ unsigned int parse_operation_with_args(URMProgram* program, FILE* stream) {
     }
 }
 
-unsigned int parse_operations(URMProgram* program, FILE* stream) {
+unsigned int parse_operations(URMProgram *program, FILE *stream) {
     if(program->current_char != URM_SYMBOL_SEPERATOR) {
         if(!parse_iteration(program, stream)) {
             if(!parse_operation(program, stream)) {
@@ -381,13 +381,13 @@ unsigned int parse_operations(URMProgram* program, FILE* stream) {
     return 1;
 }
 
-unsigned int next_token(URMProgram* program, FILE* stream) {
+unsigned int next_token(URMProgram *program, FILE *stream) {
     if(!feof(stream)) {
         next_char(program, stream);
         if(program->stack_size == 0) {
             return parse_operations(program, stream);
         } else {
-            URMStackMarker* marker = top_parsing_stack(program);
+            URMStackMarker *marker = top_parsing_stack(program);
             if(marker->token == ITERATION) {
                 if(!parse_operations(program, stream)) {
                     return parse_iteration_end(program, stream);
@@ -399,7 +399,7 @@ unsigned int next_token(URMProgram* program, FILE* stream) {
     return 0;
 }
 
-unsigned int parse(URMProgram* program, FILE* stream) {
+unsigned int parse(URMProgram *program, FILE *stream) {
     if(program->errors > 0) {
         return 0;
     }
@@ -411,7 +411,7 @@ unsigned int parse(URMProgram* program, FILE* stream) {
     while(next_token(program, stream)) {
     }
 
-    URMInstruction* urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
+    URMInstruction *urmi = (URMInstruction*)malloc(sizeof(URMInstruction));
     *urmi = (URMInstruction)  { 
         OP_HALT, 
         0,
@@ -427,7 +427,7 @@ unsigned int parse(URMProgram* program, FILE* stream) {
     return 1;
 }
 
-void free_program(URMProgram* program) {
+void free_program(URMProgram *program) {
     if(program->instructions > 0 && program->instruction_list != NULL) {
         int i = 0;
         for(; i < program->instructions; ++i) {
@@ -458,12 +458,12 @@ void free_program(URMProgram* program) {
     }
 }
 
-URMProgram* preconfigure_program(unsigned int* registers, const unsigned int n) {
+URMProgram *preconfigure_program(unsigned int *registers, const unsigned int n) {
     return preconfigure_program_loop(registers, n, 0);
 }
 
-URMProgram* preconfigure_program_loop(unsigned int* registers, const unsigned int n, const unsigned char loop) {
-    URMProgram* program = (URMProgram*)malloc(sizeof(URMProgram));
+URMProgram *preconfigure_program_loop(unsigned int *registers, const unsigned int n, const unsigned char loop) {
+    URMProgram *program = (URMProgram*)malloc(sizeof(URMProgram));
     *program = (URMProgram)  {
         NULL,
         0,

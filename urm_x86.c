@@ -7,7 +7,7 @@
 
 const unsigned int chunk_size = 1024;
 
-void push_bytes(Compilation* c, char* bytes, const unsigned int n) {
+void push_bytes(Compilation *c, char *bytes, const unsigned int n) {
     // TODO: overflow checks
     if(c->byte + n >= c->size) {
         unsigned int chunks = 1;
@@ -22,7 +22,7 @@ void push_bytes(Compilation* c, char* bytes, const unsigned int n) {
     c->byte += n;
 }
 
-void reset_stack(Compilation* c) {
+void reset_stack(Compilation *c) {
     char b[] = { 0x58,                       // POP EAX
                  0x83, 0xC4, 0x04,           // ADD ESP, 4
                  0xFF, 0xE0                  // JMP EAX
@@ -30,12 +30,12 @@ void reset_stack(Compilation* c) {
     push_bytes(c, (char*)&b, sizeof(b)); 
 }
 
-void ret(Compilation* c) {
+void ret(Compilation *c) {
     char b[] = { 0xC3 }; // RET
     push_bytes(c, (char*)&b, sizeof(b));
 }
 
-void increase(Compilation* c, const unsigned int reg) {
+void increase(Compilation *c, const unsigned int reg) {
     // TODO: handle offsets > 255
     if(c->iteration_depth > 0 && c->iteration_stack[c->iteration_depth-1].reg == reg) {
         char b[] = { 0x41 };                                        // INC ECX
@@ -52,7 +52,7 @@ void increase(Compilation* c, const unsigned int reg) {
     }
 }
 
-void decrease(Compilation* c, const unsigned int reg) {
+void decrease(Compilation *c, const unsigned int reg) {
     // TODO: handle offsets > 255
     if(c->iteration_depth > 0 && c->iteration_stack[c->iteration_depth-1].reg == reg) {
         char b[] = { 0x85, 0xC9,                                    // TEST ECX, ECX
@@ -73,7 +73,7 @@ void decrease(Compilation* c, const unsigned int reg) {
     }
 }
 
-void jump_if_zero(Compilation* c, const unsigned int reg) {
+void jump_if_zero(Compilation *c, const unsigned int reg) {
     // TODO: cheating version as in Ruby?
     if(c->iteration_depth > 0) {
         unsigned int old_counter_register = c->iteration_stack[c->iteration_depth-1].reg;
@@ -100,7 +100,7 @@ void jump_if_zero(Compilation* c, const unsigned int reg) {
     c->iteration_stack[c->iteration_depth-1] = (IterationStackMarker){ reg, c->byte - 20 };
 }
 
-void jump(Compilation* c) {
+void jump(Compilation *c) {
     char b[] = { 0xB8, 0x00, 0x00, 0x00, 0x00,                  // MOV EAX, <test address>
                  0xFF, 0xE0                                     // JMP EAX
     };                                  
@@ -111,7 +111,7 @@ void jump(Compilation* c) {
         test_address = (int)&(c->byte_code[test_byte]);
     
     // JMP xx is 6 previous bytes, exit address 14 bytes ahead of test_address
-    int* test_address_ptr = (int*)&(c->byte_code[current_byte-6]),
+    int *test_address_ptr = (int*)&(c->byte_code[current_byte-6]),
       *exit_address_ptr = (int*)&(c->byte_code[test_byte+14]);
 
     *test_address_ptr = test_address;
@@ -129,12 +129,12 @@ void jump(Compilation* c) {
     }
 }
 
-char* compile_x86(URMVM* vm, URMProgram* program) {
+char *compile_x86(URMVM *vm, URMProgram *program) {
     Compilation c = { NULL, 0, 0, NULL, 0 };
     
     int i = 0;
     for(; i < program->instructions; ++i) {
-        URMInstruction* instr = program->instruction_list[i];
+        URMInstruction *instr = program->instruction_list[i];
 
         switch(instr->instruction) {
             case OP_INC:
@@ -158,8 +158,8 @@ char* compile_x86(URMVM* vm, URMProgram* program) {
     return c.byte_code;
 }
 
-unsigned int start_native(URMVM* vm, URMProgram* program, unsigned int** registers, unsigned int* n) {
-    char* instructions = compile_x86(vm, program);
+unsigned int start_native(URMVM *vm, URMProgram *program, unsigned int **registers, unsigned int *n) {
+    char *instructions = compile_x86(vm, program);
  
     asm("PUSHL %0" : : "r"(vm->registers) );
     asm("CALL %0" : : "r"(instructions) );
