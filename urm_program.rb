@@ -54,7 +54,7 @@ class URMProgram
     
   #----------------------------------------------------------------------------
   def revert!(string)
-    string.split.each do |c|
+    string.reverse.split.each do |c|
       @io.pos = @io.pos - 1
       @current_char = c
     end
