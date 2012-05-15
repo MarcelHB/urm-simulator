@@ -53,7 +53,7 @@ class CheatingURM < URM
                   aborted = true
                   do_next = true
                   sum_at_jmp = false
-                elsif (piped_instruction[:arg][0] + pipe_index) < @idx
+                elsif pipe_index == @idx + 1 && (piped_instruction[:arg][0] + pipe_index) < @idx
                   actions = []
                   jmp_marker = pipe_index
                   pipe_index += piped_instruction[:arg][0]
