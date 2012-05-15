@@ -26,17 +26,21 @@ class CheatingURM < URM
             next
           else
             # check for any interruptions until its closing jump
+            # TODO: states cleanup!
             pipe_index = @idx + 1
             aborted = false
             actions = []
             do_next = false
+            look_back = false
+            sum_at_jmp = false
+            jmp_marker = nil
             until aborted
               piped_instruction = @program.instructions[pipe_index]
               
               case piped_instruction[:op]
               when :jmp
                 # check for this jz
-                if (piped_instruction[:arg][0] + pipe_index) == @idx
+                if (piped_instruction[:arg][0] + pipe_index) == @idx || (sum_at_jmp && pipe_index == jmp_marker)
                   iterations = @registers[args[0]]
                   actions.each_index do |i|
                     times = actions[i] || 0
@@ -48,19 +52,37 @@ class CheatingURM < URM
                   @idx = @idx + args[1]
                   aborted = true
                   do_next = true
+                  sum_at_jmp = false
+                elsif (piped_instruction[:arg][0] + pipe_index) < @idx
+                  actions = []
+                  jmp_marker = pipe_index
+                  pipe_index += piped_instruction[:arg][0]
+                  pipe_index -= 1
+                  look_back = true
+                else
+                  aborted = true
                 end
-                # interruption
-                aborted = true
               when :halt
                 aborted = true
               when :inc
-                register = piped_instruction[:arg][0]
-                actions[register] ||= 0
-                actions[register] += 1
+                unless sum_at_jmp
+                  register = piped_instruction[:arg][0]
+                  actions[register] ||= 0
+                  actions[register] += 1
+                end
               when :dec
-                register = piped_instruction[:arg][0]
-                actions[register] ||= 0
-                actions[register] -= 1
+                unless sum_at_jmp
+                  register = piped_instruction[:arg][0]
+                  actions[register] ||= 0
+                  actions[register] -= 1
+                end
+              when :jz
+                if look_back && pipe_index == @idx
+                  look_back = false
+                  sum_at_jmp = true
+                else
+                  aborted = true
+                end
               end
               pipe_index += 1
             end
