@@ -160,9 +160,10 @@ char *compile_x86(URMVM *vm, URMProgram *program) {
 
 unsigned int start_native(URMVM *vm, URMProgram *program, unsigned int **registers, unsigned int *n) {
     char *instructions = compile_x86(vm, program);
- 
-    asm("PUSHL %0" : : "r"(vm->registers) );
-    asm("CALL %0" : : "r"(instructions) );
+	
+    // TODO: is that a wise way?
+    void (*call_bytecode)(unsigned int*) = (void (*)(unsigned int*))instructions;
+    call_bytecode(vm->registers);
 
     free(instructions);
     *n = vm->number_of_registers;
