@@ -19,7 +19,7 @@ if __FILE__ == $0
     puts p.instructions
   
     Benchmark.bm do |x|
-      x.report { puts URM.run(p) }
+      x.report { puts CheatingURM.run(p) }
     end
   end
 end
