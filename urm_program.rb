@@ -5,9 +5,9 @@ class URMProgram
   ITERATION_BEGIN = "("
   ITERATION_END = ")"
   ASCII_DIGITS = (48..57).to_a
-  
+
   attr_reader :errors, :registers, :instructions
-  
+
   def initialize(io, registers = [])
     self.io = io
     self.registers = registers
@@ -16,71 +16,78 @@ class URMProgram
     self.instructions = []
     parse!
   end
-  
+
   #----------------------------------------------------------------------------
   def parse!
     if errors.length > 0
       return false
     end
-    
+
     if instructions.length > 0
       return true
     end
-    
+
+    self.consumed = 0
+    next_char!
     while next_token!
     end
-    
+
+    if @io.pos > consumed && errors.length == 0
+      errors << "[parsing] garbage at #{@io.pos}: #{@current_char}"
+      return false
+    end
+
     instructions << { :op => :halt }
-    
+
     if stack.length > 0
       errors << "[parsing] missing closing element from #{stack.last[:type]} at byte #{stack.last[:byte]}"
       return false
     end
-    
+
     true
   end
-  
+
   protected
-  
-  attr_accessor :string, :stack, :io
+
+  attr_accessor :string, :stack, :io, :consumed
   attr_writer :errors, :registers, :instructions
-  
+
   #----------------------------------------------------------------------------
   def next!(n = 1)
-    n.times do 
+    n.times do
       @current_char = @io.getc
     end
   end
-    
+
   #----------------------------------------------------------------------------
-  def revert!(string)
-    string.reverse.split.each do |c|
-      @io.pos = @io.pos - 1
-      @current_char = c
-    end
+  def accept!
+    self.consumed = @io.pos
+    next_char!
   end
-  
+
   #----------------------------------------------------------------------------
   def next_token!
-    unless @io.eof?
-      next_char!
-      if @stack.empty?
-        return parse_operations!
-      else
-        top = @stack.last
+    success = false
+    if @stack.empty?
+      success = parse_operations!
+    else
+      top = @stack.last
 
-        if top[:type] == :iteration
-          unless parse_operations!
-            return parse_iteration_end!
-          end
+      if top[:type] == :iteration
+        success = parse_operations!
+        unless success
+          success = parse_iteration_end!
         end
       end
-      true
-    else
+    end
+
+    if @io.eof? 
       false
+    else
+      success
     end
   end
-  
+
   #----------------------------------------------------------------------------
   def parse_operations!
     if @current_char != SEPERATOR
@@ -89,10 +96,12 @@ class URMProgram
           return parse_operation_with_args!
         end
       end
+    else
+      accept!
     end
     true
   end
-  
+
   #----------------------------------------------------------------------------
   def next_char!
     next!
@@ -100,11 +109,11 @@ class URMProgram
       next!
     end
   end
-  
+
   #----------------------------------------------------------------------------
   def parse_operation!
     instruction = nil
-    
+
     case @current_char
     when OPERATIONS[0] # 'A'
       instruction = :inc
@@ -119,24 +128,27 @@ class URMProgram
 
     if number
       @instructions << { :op => instruction, :arg => [number] }
+      accept!
       true
     else
       errors << "[parsing] expected a number at #{io.pos}"
       false
     end
   end
-  
+
   #----------------------------------------------------------------------------
   def parse_iteration!
     if @current_char == ITERATION_BEGIN
       @instructions << { :op => :jz, :arg => [] }
       @stack.push({ :type => :iteration, :instruction => @instructions.length - 1, :byte => @io.pos })
+      accept!
+
       true
     else
       false
     end
   end
-  
+
   #----------------------------------------------------------------------------
   def parse_iteration_end!
     top = @stack.last
@@ -144,26 +156,28 @@ class URMProgram
       top = @stack.pop
       distance = @instructions.length - top[:instruction]
       @instructions << { :op => :jmp, :arg => [-distance] }
-      
+
       next_char!
       register = parse_number
 
-      if register.nil?
+      unless register
         errors << "[parsing] required operation register at #{@io.pos}"
         return false
       end
 
       @instructions[top[:instruction]][:arg] = [register, distance + 1]
+      accept!
+
       true
     else
       false
     end
   end
-  
+
   #----------------------------------------------------------------------------
   def parse_operation_with_args!
     instruction = :move
-    
+
     case @current_char
     when OPERATION_ARGS[0] # 'R'
       instruction = :move
@@ -172,17 +186,17 @@ class URMProgram
     else
       return false
     end
-    
+
     next_char!
     if @current_char == ITERATION_BEGIN
       next_char!
-      
+
       source = parse_number
-      if source.nil?
+      unless source
         errors << "[parsing] required source register at #{@io.pos}"
         return false
       end
-      
+
       destinations = []
       next_char!
 
@@ -191,6 +205,12 @@ class URMProgram
       elsif @current_char == SEPERATOR
         next_char!
         destinations = parse_destination_list
+        if @current_char == ITERATION_END
+          accept!
+        else
+          errors << "[parsing] unclosed operation at #{@io.pos}"
+          return false
+        end
       else
         return false
       end
@@ -200,14 +220,14 @@ class URMProgram
       else
         change!(source, destinations)
       end
-      
+
       true
     else
       errors << "[parsing] expected '#{ITERATION_BEGIN}' at #{@io.pos}"
       false
     end
   end
-  
+
   #----------------------------------------------------------------------------
   def parse_destination_list
     destinations = []
@@ -221,7 +241,7 @@ class URMProgram
         errors << "[parsing] expected destination at #{@io.pos}"
         break
       end
-      
+
       next_char!
       if @current_char == ITERATION_END
         break
@@ -232,27 +252,35 @@ class URMProgram
         break
       end
     end
-    
+
     destinations
   end
-  
+
   #----------------------------------------------------------------------------
   def parse_number
     digit_buffer = ""
 
-    while @current_char && ASCII_DIGITS.include?(@current_char.ord)
+    while ASCII_DIGITS.include?(@current_char.ord)
       digit_buffer += @current_char
-      next!
+      if @io.eof?
+        break
+      else
+        next!
+      end
+    end
+
+    if !@io.eof? || !ASCII_DIGITS.include?(@current_char.ord)
+      @io.pos -= 1
     end
 
     if digit_buffer.length > 0
-      revert!(digit_buffer.split.last)
+      @current_char = digit_buffer.split("").last
       digit_buffer.to_i
     else
       nil
     end
   end
-  
+
   #----------------------------------------------------------------------------
   def move!(source, destinations)
     @instructions << { :op => :jz, :arg => [source, 1] }
@@ -261,13 +289,13 @@ class URMProgram
     destinations.each do |dest|
       @instructions << { :op => :inc, :arg => [dest] }
     end
-    
+
     @instructions << { :op => :dec, :arg => [source] }
     distance = @instructions.length - exiting_instruction
     @instructions << { :op => :jmp, :arg => [-distance] }
     @instructions[exiting_instruction][:arg] = [source, distance + 1]
   end
-  
+
   #----------------------------------------------------------------------------
   def change!(source, destinations)
     move!(source, [0] + destinations)

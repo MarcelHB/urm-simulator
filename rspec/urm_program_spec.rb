@@ -15,17 +15,17 @@ describe URMProgram do
   end
 
   it "can parse an atomic C-operation" do
-    p = URMProgram.new(StringIO.new("C(0,1)"), [0, 0])
+    p = URMProgram.new(StringIO.new("C(0;1)"), [0, 0])
     p.errors.length.should eq(0)
   end
 
   it "can parse an atomic R-operation" do
-    p = URMProgram.new(StringIO.new("R(0,1)"), [0, 0])
+    p = URMProgram.new(StringIO.new("R(0;1)"), [0, 0])
     p.errors.length.should eq(0)
   end
 
   it "can parse multiple atomic operations" do
-    p = URMProgram.new(StringIO.new("A1;S1;C(0,1);R(0,1)"), [0, 0])
+    p = URMProgram.new(StringIO.new("A1;S1;C(0;1);R(0;1)"), [0, 0])
     p.errors.length.should eq(0)
   end
 
@@ -42,6 +42,13 @@ describe URMProgram do
   it "can parse an organic program" do
     p = URMProgram.new(StringIO.new("(C(3;4);(A1;S4)4;S2)2;(S3)3"), [0, 0, 0])
     p.errors.length.should eq(0)
+  end
+  
+  it "stops parsing on finding garbage" do
+    p = URMProgram.new(StringIO.new("A1;S;A1"), [0, 0])
+    p.errors.length.should eq(1)
+    p = URMProgram.new(StringIO.new("A1;S1;A1 x"), [0, 0])
+    p.errors.length.should eq(1)
   end
 
   it "does not allow unmatched brackets" do
