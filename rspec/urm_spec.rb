@@ -55,4 +55,30 @@ describe URM do
     
     results[1].should eq(1)
   end
+
+  it "does not run on errors" do
+    p = NativeProgram.new([
+      { :op => :inc, :arg => [1] },
+      { :op => :inc, :arg => [2] },
+      { :op => :halt }
+    ], ["error"], [0, 0, 0])
+    u = URM.new(p)
+    u.start!
+    u.registers.should eq([])
+  end
+
+  it "correctly preallocates registers" do
+    p = NativeProgram.new([
+      { :op => :inc, :arg => [1] },
+      { :op => :inc, :arg => [2] },
+      { :op => :dec, :arg => [3] },
+      { :op => :jz, :arg => [4, 1] },
+      { :op => :halt }
+    ], [], [])
+    u = URM.new(p)
+    u.start!
+    u.registers[0].should eq(0)
+    u.registers[4].should eq(0)
+    u.registers.length.should eq(5)
+  end
 end
