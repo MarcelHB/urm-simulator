@@ -11,7 +11,7 @@ enum URMParsingToken { ITERATION };
 typedef struct URMStackMarker {
     enum URMParsingToken token;
     unsigned int instruction_number;
-    unsigned int byte;
+    unsigned long byte;
 } URMStackMarker;
 
 typedef struct URMProgram {
@@ -25,12 +25,12 @@ typedef struct URMProgram {
     unsigned int* registers;
     unsigned int number_of_registers;
     unsigned char current_char;
-    unsigned int byte;
-    fpos_t pos;
+    unsigned long byte;
+    unsigned long consumed;
 } URMProgram;
 
+void accept(URMProgram*, FILE*);
 void next(URMProgram*, FILE*);
-void revert(URMProgram*, FILE*);
 void next_char(URMProgram*, FILE*);
 unsigned int next_token(URMProgram*, FILE*);
 
