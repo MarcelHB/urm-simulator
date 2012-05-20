@@ -19,7 +19,7 @@ class GotoProgram
     self.unresolvables = []
     self.errors = []
     self.instructions = []
-    self.current_line = 0
+    self.current_line = 1
     parse!
   end
 
@@ -65,7 +65,7 @@ class GotoProgram
   
   #----------------------------------------------------------------------------
   def revert!(string)
-    string.reverse.split.each do |c|
+    string.reverse.split("").each do |c|
       @io.pos -= 1
       @current_char = c
     end
@@ -124,13 +124,21 @@ class GotoProgram
   def parse_number
     digit_buffer = ""
 
-    while @current_char && ASCII_DIGITS.include?(@current_char.ord)
+    while ASCII_DIGITS.include?(@current_char.ord)
       digit_buffer += @current_char
-      next!
+      if @io.eof?
+        break
+      else
+        next!
+      end
+    end
+
+    if !@io.eof? || !ASCII_DIGITS.include?(@current_char.ord)
+      @io.pos -= 1
     end
 
     if digit_buffer.length > 0
-      revert!(digit_buffer.split.last)
+      @current_char = digit_buffer.split("").last
       digit_buffer.to_i
     else
       nil
