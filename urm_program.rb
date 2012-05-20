@@ -37,12 +37,12 @@ class URMProgram
       return false
     end
 
-    instructions << { :op => :halt }
-
-    if stack.length > 0
+    if stack.length > 0 && errors.length == 0
       errors << "[parsing] missing closing element from #{stack.last[:type]} at byte #{stack.last[:byte]}"
       return false
     end
+
+    instructions << { :op => :halt }
 
     true
   end
