@@ -328,14 +328,14 @@ class GotoProgram
       ]
 
       if label_mapping.has_key?(true_jump)
-        target = label_mapping[true_jump] - (instructions.length - 2)
-        self.instructions[-1][:arg] = [register, -target]
+        target = label_mapping[true_jump] - (instructions.length - 1)
+        self.instructions[-1][:arg] = [target]
       else
         unresolvables << { :type => :jmp, :instruction => instructions.length - 1, :label => true_jump }
       end
       if label_mapping.has_key?(false_jump)
-        target = label_mapping[false_jump] - (instructions.length - 1)
-        self.instructions[-2][:arg] = [-target]
+        target = label_mapping[false_jump] - (instructions.length - 2)
+        self.instructions[-2][:arg] = [target]
       else
         unresolvables << { :type => :jmp, :instruction => instructions.length - 2, :label => false_jump }
       end
@@ -407,7 +407,6 @@ class GotoProgram
     unresolvables.select{ |u| [:jmp, :jz].include?(u[:type]) }.each do |un|
       if label_mapping.has_key?(un[:label])
         target = un[:instruction] - label_mapping[un[:label]]
-
         if un[:type] == :jmp
           instructions[un[:instruction]][:arg] = [-target]
         else
